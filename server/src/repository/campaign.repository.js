@@ -1,15 +1,12 @@
 import Campaign from "../models/campaign.model.js";
 
-export const createCampaign = (data) => {
-  return Campaign.create(data);
-};
-
-export const getCampaigns = (filters = {}) => {
-  return Campaign.find(filters).sort({ createdAt: -1 }).lean();
+export const createCampaign = async (data) => {
+  const campaign = new Campaign(data);
+  return await campaign.save();
 };
 
 export const getCampaignById = (id) => {
-  return Campaign.findById(id).lean();
+  return Campaign.findById(id);
 };
 
 export const updateCampaign = (id, updateData) => {
@@ -53,4 +50,32 @@ export const addCampaignRating = (campaignId, ratingData) => {
     { $push: { ratings: ratingData } },
     { new: true, runValidators: true }
   );
+};
+export const getCampaigns = async (filters = {}) => {
+  const { category, status, createdBy, location, search } = filters;
+  const query = {};
+  if (category) query.category = category;
+  if (status) query.status = status;
+  if (createdBy) query.createdBy = createdBy;
+  if (location) query.location = { $regex: location, $options: "i" };
+  if (search) {
+    query.$or = [
+      { title: { $regex: search, $options: "i" } },
+      { description: { $regex: search, $options: "i" } },
+    ];
+  }
+
+  return Campaign.find(query)
+    .select(
+      "title location date category status createdBy createdAt attachments"
+    )
+    .sort("-createdAt")
+    .lean();
+};
+
+export const getCampaignWithVolunteerRequests = (id) => {
+  return Campaign.findById(id).populate({
+    path: "volunteers.volunteer",
+    select: "firstName lastName email profilePic",
+  });
 };

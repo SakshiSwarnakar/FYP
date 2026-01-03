@@ -1,60 +1,65 @@
-import { Building2, MapPin } from 'lucide-react'
-import { Link, useNavigate } from 'react-router'
-import { useAuth } from '../context/AuthContext'
+import HeroSection from '../components/HeroSection'
+import CampaignFeatures from '../components/Features'
+import CampaignCard from '../components/CampaignCard'
+
+const campaigns = [
+  {
+    id: 1,
+    title: 'Free Health Checkup Camp',
+    description: 'Free BP, sugar, BMI, and general health checkup for everyone.',
+    location: 'Kathmandu',
+    date: '2025-01-05',
+    image: 'https://images.unsplash.com/photo-1580281657521-7f2a4f6f8b9b',
+    organizer: 'City Hospital',
+    volunteersNeeded: 20
+  },
+  {
+    id: 2,
+    title: 'Blood Donation Campaign',
+    description: 'Donate blood and help save lives. Refreshments provided.',
+    location: 'Lalitpur',
+    date: '2025-01-12',
+    image: 'https://images.unsplash.com/photo-1582719478185-2f1b7b9b8f6b',
+    organizer: 'Red Cross Nepal',
+    volunteersNeeded: 30
+  },
+  {
+    id: 3,
+    title: 'Mental Health Awareness Program',
+    description: 'Session on mental health awareness and stress management.',
+    location: 'Bhaktapur',
+    date: '2025-01-20',
+    image: 'https://images.unsplash.com/photo-1526256262350-7da7584cf5eb',
+    organizer: 'MindCare Nepal',
+    volunteersNeeded: 15
+  }
+]
 
 function Home() {
-    const navigate = useNavigate()
-    const { user } = useAuth()
+  return (
+    <div>
+      <HeroSection />
+      <CampaignFeatures />
 
-    const handleRegister = async () => {
-        if (!user) {
-            navigate('/login')
-            return;
-        }
-        await registerEventVolunteer(user.id)
-    }
-    return (
-        <div className='h-screen space-y-3 container mx-auto'>
-            {events.map(event => (
-                <div key={event._id} className='cursor-pointer hover:scale-105 duration-100 border border-border hover:shadow-2xl rounded p-4'>
-                    <Link to={`/event/${event._id}`}>
-                        <h3 className='font-bold text-xl'>{event.name}</h3>
-                        <p className='flex gap-1 my-2 items-center text-gray-500'>
-                            <span><Building2 size={14} /></span>
-                            <span> {event.organizer}</span>
-                        </p>
-                        <p className='flex gap-1 items-center text-gray-500'><span><MapPin size={14} /></span>
-                            <span>{event.location}</span>
-                        </p>
-                    </Link>
-                    <div className='flex justify-end'>
-                        <button onClick={handleRegister} className='cursor-pointer bg-primary text-white rounded px-4 py-1'>Register</button>
-                    </div>
-                </div>
-            ))}
+      <div className='container mx-auto'>
+        <div>
+          <h1 className='text-5xl text-primary font-bold'>Latest Campaign</h1>
+          <p className='text-lg text-gray-500'>
+            Explore what's happening around you.
+          </p>
         </div>
-    )
+
+        <div className='grid-container mt-6'>
+          {campaigns.map(event => (
+            <CampaignCard
+              key={event.id}
+              campaign={event}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default Home
-
-const events = [
-    {
-        _id: 12345,
-        name: 'Concert',
-        location: 'Yak & Yeti Ground',
-        organizer: 'Biplav Group of Company'
-    },
-    {
-        _id: 45,
-        name: 'Concert',
-        location: 'Yak & Yeti Ground',
-        organizer: 'Biplav Group of Company'
-    },
-    {
-        _id: 75,
-        name: 'Concert',
-        location: 'Yak & Yeti Ground',
-        organizer: 'Biplav Group of Company'
-    },
-]

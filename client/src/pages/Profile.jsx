@@ -1,39 +1,75 @@
 import { useNavigate } from 'react-router'
+import { useEffect } from 'react'
+import Loading from '../components/Loading'
+import CampaignCard from '../components/CampaignCard'
 import { useAuth } from '../context/AuthContext'
-import { useEffect } from 'react';
-import Loading from '../components/Loading';
-import { User } from 'lucide-react';
+import { useCampaign } from '../context/CampaignContext'
 
 function Profile() {
-    const navigate = useNavigate()
-    const { user, loading, logout } = useAuth()
-
-    useEffect(() => {
-        if (!loading && !user) {
-            navigate('/login');
-        }
-    }, [loading, user]);
-
-    if (loading) {
-        return (
-            <Loading />
-        )
+  const navigate = useNavigate()
+  const { user, loading } = useAuth()
+  const {
+    campaigns,
+    status,
+    choseCampaign,
+    activeCampaign,
+    handleRegister,
+  } = useCampaign()
+console.log(campaigns)
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate('/')
     }
+  }, [loading, user])
 
+  /* ---------------- Loading ---------------- */
+  if (loading || status === 'loading') {
+    return <Loading />
+  }
+
+  /* ---------------- No campaigns ---------------- */
+  if (!campaigns || campaigns.length === 0) {
     return (
-        <div className='container mx-auto px-3 lg:px-0' >
-            <div className='flex gap-2'>
-                <div className='bg-accent/50 w-fit p-3 text-white rounded'><User /></div>
-                <div>
-                    <span className='block'>{user?.email.split("@")[0]}</span>
-                    <span>{user?.role.toLowerCase()}</span>
-                </div>
-                <div className='ml-auto'>
-                    <button className='bg-accent text-white px-3 py-2 rounded font-semibold' onClick={logout}>Logout</button>
-                </div>
-            </div>
-        </div>
+      <div className="flex flex-col items-center justify-center mt-20 text-center">
+        <h2 className="text-2xl font-semibold text-gray-700">
+          No campaigns found
+        </h2>
+        <p className="text-gray-500 mt-2">
+          You haven’t created or joined any campaigns yet.
+        </p>
+        <button
+          className="primary-btn mt-6"
+          onClick={() => navigate('/campaign/create')}
+        >
+          Create your first campaign
+        </button>
+      </div>
     )
+  }
+
+  /* ---------------- Campaign list ---------------- */
+  return (
+    <>
+      <div className="flex-1 flex items-center justify-between">
+        <h1 className="font-bold text-primary mb-10 text-5xl">
+          My Events
+        </h1>
+      </div>
+
+      <div className="grid-container mt-4">
+        {campaigns?.data?.map((campaign) => (
+          <CampaignCard
+            key={campaign?.id}
+            campaign={campaign}
+            handleRegister={handleRegister}
+            choseCampaign={choseCampaign}
+          />
+        ))}
+
+       
+      </div>
+    </>
+  )
 }
 
-export default Profile;
+export default Profile

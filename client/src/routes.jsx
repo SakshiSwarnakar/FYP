@@ -1,10 +1,13 @@
 import { createBrowserRouter } from "react-router";
 import App from "./App";
 import Home from "./pages/Home";
-import Profile from "./pages/Profile";
+import Profile from "./pages//Profile";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Event from "./pages/Event";
+import Campaign from "./pages/Campaign";
+import CreateCampaign from "./pages/CreateCampaign";
+import Client from "./layout/Client";
+import Dashboard from "./layout/Dashboard";
 
 export const router = createBrowserRouter([
   {
@@ -12,26 +15,52 @@ export const router = createBrowserRouter([
     element: <App />,
     children: [
       {
-        index: true,
-        element: <Home />
+        path: '/',
+        element: <Client />,
+        children: [
+          {
+            index: true,
+            element: <Home />
+          },
+          {
+            path: '/login',
+            element: <Login />
+          },
+          {
+            path: '/register',
+            element: <Register />
+          },
+          
+        
+          {
+            path: '/campaign/:id',
+            element: <Campaign />
+          },
+        ]
       },
-      {
-        path: '/login',
-        element: <Login />
-      }, {
-        path: '/register',
-        element: <Register />
-      },
-      {
-        path: '/event/:id',
-        element: <Event />
 
-      },
       {
-        path: '/profile',
-        element: <Profile />
-      },
-
+        path: '/dashboard',
+        element: <Dashboard />,
+        children: [
+          {
+            index: true,
+            element: <Profile />
+          },
+          {
+            path: 'create-campaign',
+            element: <CreateCampaign />
+          },
+          {
+            path: 'create-campaign/:id',
+            element: <CreateCampaign />
+          },
+          {
+            path: 'campaign/:id',
+            element: <Campaign />
+          },
+        ]
+      }
     ]
   }
 ]);

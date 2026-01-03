@@ -5,6 +5,7 @@ import { errorHandler, notFound } from "./middleware/errorHandlers.js";
 
 import authRoutes from "./routes/auth.route.js";
 import healthRoute from "./routes/health.route.js";
+import campaignRoutes from "./routes/campaign.route.js";
 
 const app = express();
 
@@ -14,7 +15,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use("/health", healthRoute);
 app.use("/api/auth", authRoutes);
-
+app.use("/api/campaign", campaignRoutes);
 app.use(notFound);
 app.use(errorHandler);
 
