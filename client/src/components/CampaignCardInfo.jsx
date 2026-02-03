@@ -16,8 +16,8 @@ function CampaignCardInfo({ campaign }) {
 
 function InfoItem({ icon: Icon, label }) {
     return (
-        <p className="flex gap-2 items-center text-accent text-sm">
-            <Icon size={16} className="text-accent" />
+        <p className="flex gap-2 items-center text-sm">
+            <Icon size={16} />
             <span className="truncate">{label || "--"}</span>
         </p>
     );

@@ -19,7 +19,7 @@ function EventCardFooter({ campaign, choseCampaign, user, location }) {
             </Link>
 
             {(user?.role === "VOLUNTEER" && !location.pathname.includes("profile")) && (
-                <button onClick={() => handleRegister(campaign?.id)} className="secondary-btn">
+                <button title="Register" onClick={() => handleRegister(campaign?.id)} className="secondary-btn">
                     Register
                 </button>
             )}

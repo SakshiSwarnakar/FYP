@@ -25,7 +25,6 @@ export const AuthProvider = ({ children }) => {
 
     const register = async (formData) => {
         let data;
-        console.log(formData);
 
         if (formData.role == 'ADMIN') {
             data = await apiPublic.post('/auth/register/organizer', formData)
@@ -36,20 +35,21 @@ export const AuthProvider = ({ children }) => {
     }
 
     const login = async (email, password) => {
-        const data = await api.post('/auth/login', { email, password })
+        const data = await apiPublic.post('/auth/login', { email, password })
         if (data.status == 'success') {
             setUser(data.data)
             sessionStorage.setItem('rt', data.data.refreshToken);
             sessionStorage.setItem('id', data.data.id);
-            sessionStorage.setItem('at', data.data.accessToken)
+            sessionStorage.setItem('at', data.data.accessToken);
             return data.status;
         }
+        return new Error(data);
     }
 
     const logout = () => {
         setUser(null)
         sessionStorage.clear()
-        return data;
+        return null;
     }
 
     return (

@@ -16,15 +16,54 @@
 }
 
 @theme {
-  --color-primary: #2c7a7b;     /* Deep Teal */
-  --color-secondary: #ddefe3;   /* Soft Mint */
-  --color-accent: #ff7f50;      /* Coral / Orange */
-  --color-bg: #f5f7f6;          /* Light Gray */
-  --color-text: #4a4a4a;        /* Dark Gray */
-  --color-border: #d1d5db;      /* subtle border */
+  --color-primary: #ad46ff;
+  --color-secondary: #e5f1ff;
+  --color-accent: #004d85;
+  --color-bg: #f5f7f6;
+  --color-text: #0a0a0a;
+  --color-border: #ffcdf2;
+}
+body,
+nav {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+}
+.container {
+  @apply px-3;
 }
 
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
+.primary-btn {
+  @apply px-4 py-2 border-primary border md:px-4 md:py-2  rounded-lg font-semibold text-sm justify-center transition-all bg-primary cursor-pointer hover:bg-primary text-white duration-200 flex items-center gap-1;
+}
+.tab-btn {
+  @apply rounded-lg flex gap-2 items-center text-white text-left py-3 px-2 duration-300 transition-colors;
+}
+
+.primary-btn:has(svg) {
+  @apply p-3;
+}
+
+.secondary-btn {
+  @apply px-4 py-2 rounded-lg font-semibold text-sm transition-all border border-border hover:bg-border cursor-pointer text-black duration-200 flex items-center gap-1;
+}
+.grid-container {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2 md:gap-6;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+  }
+  to {
+    transform: scale(1);
+  }
 }

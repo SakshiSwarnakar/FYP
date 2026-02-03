@@ -55,27 +55,31 @@ function Campaign() {
         }
     }
 
-    const approveVolunteer = async (volunteerId) => {
+
+
+    const handleVolunteerRequest = async (status, volunteerId) => {
         try {
             const res = await api.patch(
                 `/campaign/${id}/volunteer-requests/${volunteerId}`,
-                { status: "accepted" } // keep status consistent with backend
+                { status } // keep status consistent with backend
             );
+            handleVolunteer()
 
-            // remove approved volunteer from UI
-            // setVolunteers(prev => ({
-            //   ...prev,
-            //   volunteerRequests: prev.volunteerRequests.filter(
-            //     v => v.volunteer !== volunteerId
-            //   )
-            // }));
-
-            toast.success("Volunteer approved");
+            toast.success(res.message);
         } catch (error) {
             toast.error("Failed to approve volunteer");
             console.error(error);
         }
     };
+
+    const addComment = async() => {
+        try {
+            const res = await api.get('')
+        } catch (error) {
+            
+        }
+
+    }
 
 
     if (loading) return <Loading />
@@ -83,7 +87,7 @@ function Campaign() {
     if (!campaign) return null
 
     return (
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-6xl my-12 mx-auto">
             {campaign.attachments && (
                 <img
                     className="h-120 w-full object-cover mb-10 rounded"
@@ -99,19 +103,19 @@ function Campaign() {
                         <h1 className="text-primary text-4xl font-bold mb-2">
                             {campaign.title}
                         </h1>
-                        <button onClick={handleVolunteer} className='primary-btn md:space-x-2'>
+                        {isAdmin && <button onClick={handleVolunteer} className='primary-btn md:space-x-2'>
                             <UsersRound size={16} />
-                            <span className='hidden md:inline'>Volunteer</span></button>
+                            <span className='hidden md:inline'>Volunteer</span></button>}
                         {/* ================= Volunteers (ADMIN) ================= */}
-                        {isAdmin && volunteerPop && (
+                        {(isAdmin && volunteerPop) && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
 
                                 {/* Modal */}
-                                <div className="w-full max-w-lg rounded-2xl bg-accent shadow-xl p-6 animate-fadeIn">
+                                <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl p-6 animate-fadeIn">
 
                                     {/* Header */}
                                     <div className="flex items-center justify-between">
-                                        <h2 className="text-xl font-semibold text-white">
+                                        <h2 className="text-xl font-semibold text-primary">
                                             Volunteer Requests
                                         </h2>
 
@@ -119,34 +123,37 @@ function Campaign() {
                                             onClick={() => openPopup(false)}
                                             className="p-1 rounded-md hover:bg-white/10 transition"
                                         >
-                                            <X className="text-white hover:text-red-500" />
+                                            <X className=" hover:text-red-500" />
                                         </button>
                                     </div>
 
-                                    <hr className="my-4 border-white/10" />
+                                    <hr className="my-4 border-black/10" />
 
                                     {/* Content */}
                                     <div className="max-h-80 space-y-3 overflow-y-auto">
                                         {volunteers?.volunteerRequests?.length > 0 ? (
                                             volunteers.volunteerRequests.map((vl) => (
                                                 <div
-                                                    key={vl.volunteer}
-                                                    className="flex items-center justify-between rounded-lg bg-black/30 px-4 py-3 hover:bg-black/40 transition"
+                                                    key={vl.volunteer.id}
+                                                    className="flex gap-2 items-center justify-between rounded-lg bg-primary/30 px-4 py-3 hover:bg-primary/40 transition"
                                                 >
-                                                    <span className="text-white font-medium">
-                                                        {vl.volunteer}
+                                                    <span className="text-black font-semibold">
+                                                        {vl.volunteer.fullName}
                                                     </span>
 
                                                     <button
-                                                        onClick={() => approveVolunteer(vl.volunteer)}
-                                                        className="primary-btn"
+                                                        onClick={() => handleVolunteerRequest('accepted', vl.volunteer.id)}
+                                                        className="primary-btn ml-auto"
                                                     >
                                                         Approve
+                                                    </button>
+                                                    <button onClick={() => handleVolunteerRequest('rejected', vl.volunteer.id)} className='secondary-btn bg-bg'>
+                                                        Decline
                                                     </button>
                                                 </div>
                                             ))
                                         ) : (
-                                            <p className="text-center text-white/60">
+                                            <p className="text-center text-black/60">
                                                 No pending volunteer requests
                                             </p>
                                         )}
@@ -224,19 +231,22 @@ function Campaign() {
 
                 {/* ================= Add Comment ================= */}
                 <div className="relative mt-6 p-4 bg-white border border-border rounded-2xl shadow-sm">
-                    <div className={!user ? 'blur-sm' : ''}>
+
+                    <form onSubmit={addComment} className={!user ? 'blur-sm' : ''}>
                         <textarea
                             placeholder="Write your comment..."
                             className="w-full border border-border rounded-xl p-3 outline-none focus:border-primary transition-all"
                             rows="3"
+
                         />
                         <button
+                            type='submit'
                             disabled={!user}
                             className="mt-3 bg-primary text-white px-4 py-2 rounded-xl hover:bg-primary-hover transition-all"
                         >
                             Post Comment
                         </button>
-                    </div>
+                    </form>
 
                     {!user && (
                         <Link

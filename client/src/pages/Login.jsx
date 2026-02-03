@@ -1,28 +1,38 @@
-import { useState } from "react";
-import { Link, useNavigate } from 'react-router'
+import { useEffect, useState } from "react";
+import { Link, useLocation, useNavigate } from 'react-router'
 import { useAuth } from "../context/AuthContext";
+import { Eye, EyeClosed } from "lucide-react";
+import { toast } from "react-toastify";
 
 export default function Login() {
     const navigate = useNavigate()
-    const { login } = useAuth();
+    const location = useLocation()
+    const { user, login } = useAuth();
+
+    const from = location.state?.from || "/dashboard";
+
 
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
+    const [viewpw, setViewpw] = useState(false)
     const [loading, setLoading] = useState(false);
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError("");
+        setLoading(true)
 
         try {
             const status = await login(email, password);
+
             if (status == 'success') {
-                navigate('/profile')
-                return;
+                navigate(from, { replace: true });
             }
+
         } catch (err) {
-            setError("Invalid email or password");
+            toast.error("Invalid email or password");
         } finally {
             setLoading(false);
         }
@@ -57,17 +67,26 @@ export default function Login() {
                     </div>
 
                     {/* Password */}
-                    <div>
+                    <div className="relative">
                         <label className="block mb-1 font-medium">Password</label>
                         <input
-                            type="password"
+                            type={viewpw ? "text" : "password"}
                             className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                             placeholder="Enter your password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
                         />
+                        <button type="button" onClick={() => setViewpw(!viewpw)} className="absolute cursor-pointer top-9 right-2">
+                            {viewpw ? <EyeClosed /> : <Eye />}
+                        </button>
+                        <div className="text-right">
+                            <Link className="underline text-sm text-blue-400" to='/forgotpassword'>
+                                Forgot Password.
+                            </Link>
+                        </div>
                     </div>
+
 
                     {/* Button */}
                     <button

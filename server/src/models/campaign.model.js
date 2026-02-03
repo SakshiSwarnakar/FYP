@@ -35,13 +35,16 @@ const campaignSchema = new mongoose.Schema(
       default: "DRAFT",
     },
 
-    attachments: [
-      {
-        url: String,
-        public_id: String,
-        type: String,
-      },
-    ],
+    attachments: {
+      type: [
+        {
+          url: { type: String, required: true },
+          public_id: { type: String, required: true },
+          type: { type: String, required: true },
+        },
+      ],
+      default: [],
+    },
 
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
@@ -51,8 +54,23 @@ const campaignSchema = new mongoose.Schema(
 
     volunteers: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "VolunteerRegistration",
+        volunteer: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        status: {
+          type: String,
+          enum: ["pending", "accepted", "rejected"],
+          default: "pending",
+        },
+        appliedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        respondedAt: {
+          type: Date,
+        },
       },
     ],
 

@@ -1,6 +1,6 @@
 import { HTTP_STATUS } from "../constants/http.js";
 import assertOrThrow from "../utils/assertOrThrow.js";
-
+import { uploadToCloudinary } from "../utils/cloudinary.js";
 
 import {
   addCampaignRating,
@@ -20,7 +20,22 @@ export const createCampaignService = async (data) => {
 
   let attachments = [];
 
-  
+  if (files && files.length > 0) {
+    const uploadPromises = files.map(async (file) => {
+      const uploaded = await uploadToCloudinary(
+        file.buffer,
+        "campaign_attachments"
+      );
+
+      return {
+        url: uploaded.secure_url,
+        public_id: uploaded.public_id,
+        type: uploaded.resource_type,
+      };
+    });
+
+    attachments = await Promise.all(uploadPromises);
+  }
 
   const campaignData = {
     title,
@@ -180,7 +195,25 @@ export const updateCampaignService = async (id, data) => {
     status,
   };
 
-  
+  if (files && files.length > 0) {
+    const newAttachments = await Promise.all(
+      files.map(async (file) => {
+        const uploaded = await uploadToCloudinary(
+          file.buffer,
+          "campaign_attachments"
+        );
+
+        return {
+          url: uploaded.secure_url,
+          public_id: uploaded.public_id,
+          type: uploaded.resource_type,
+        };
+      })
+    );
+
+    updateData.attachments = newAttachments;
+  }
+
   const updated = await updateCampaign(id, updateData);
 
   assertOrThrow(updated, HTTP_STATUS.NOT_FOUND, "Campaign not found");

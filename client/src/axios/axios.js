@@ -3,6 +3,9 @@ import axios from "axios";
 export const apiPublic = axios.create({
   baseURL: import.meta.env.VITE_BE,
 });
+
+apiPublic.interceptors.response.use((response) => response.data);
+
 export const api = axios.create({
   baseURL: import.meta.env.VITE_BE,
   withCredentials: true,
@@ -37,7 +40,7 @@ api.interceptors.response.use(
       }
     }
 
-    return Promise.reject(error);
+    return Promise.reject(error.response.data);
   }
 );
 

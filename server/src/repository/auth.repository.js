@@ -9,3 +9,5 @@ export const findUserById = (id) => User.findById(id).lean({ virtuals: true });
 
 export const findUserByResetToken = (hashedToken) =>
   User.findOne({ resetPasswordToken: hashedToken }).select("+password");
+
+export const findUserDocById = (id) => User.findById(id);

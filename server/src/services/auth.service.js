@@ -179,6 +179,10 @@ export const getMeService = async (userId) => {
     fullName: user.fullName,
     email: user.email,
     role: user.role,
+    skills: user.skills,
+    interests: user.interests,
+    profilePic: user.profilePic?.url || null,
+    badges: user.badges,
   };
 };
 
@@ -212,7 +216,6 @@ export const resetPasswordService = async (token, newPassword) => {
   );
 
   user.password = newPassword;
-
   user.resetPasswordToken = undefined;
   user.resetPasswordExpire = undefined;
 

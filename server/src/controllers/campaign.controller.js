@@ -14,7 +14,6 @@ import asyncHandler from "../utils/asyncHandler.js";
 import { success } from "../utils/response.js";
 
 export const createCampaign = asyncHandler(async (req, res) => {
-  console.log(req.body)
   const data = await createCampaignService({
     ...req.body,
     files: req.files || [],
@@ -57,12 +56,12 @@ export const addCampaignRating = asyncHandler(async (req, res) => {
 });
 
 export const applyForCampaign = asyncHandler(async (req, res) => {
- // console.log("here!")
+  // console.log("here!")
   console.log("the request is", req)
- // console.log("the user is", req?.user);
+  // console.log("the user is", req?.user);
   //console.log("the id inn params is", req.params);
   const userId = req.body.user.id;
-  
+
 
   const campaignId = req.params.id;
   const data = await applyForCampaignService(campaignId, userId);
