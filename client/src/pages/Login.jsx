@@ -7,9 +7,7 @@ import { toast } from "react-toastify";
 export default function Login() {
     const navigate = useNavigate()
     const location = useLocation()
-    const { user, login } = useAuth();
-
-    const from = location.state?.from || "/dashboard";
+    const { login } = useAuth();
 
 
     const [email, setEmail] = useState("");
@@ -18,6 +16,11 @@ export default function Login() {
     const [viewpw, setViewpw] = useState(false)
     const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        window.scrollTo(0, 0)
+    }, [])
+
+
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -25,9 +28,10 @@ export default function Login() {
         setLoading(true)
 
         try {
-            const status = await login(email, password);
+            const data = await login(email, password);
 
-            if (status == 'success') {
+            const from = location.state?.from || data?.data?.role == 'ADMIN' ? "/dashboard/campaign" : '/campaign'
+            if (data.status == 'success') {
                 navigate(from, { replace: true });
             }
 

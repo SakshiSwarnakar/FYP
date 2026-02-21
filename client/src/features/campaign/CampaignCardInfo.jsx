@@ -1,14 +1,14 @@
-import { Bookmark, Building2, CalendarDays, MapPin } from "lucide-react";
+import { Bookmark, CalendarDays, MapPin } from "lucide-react";
 
 function CampaignCardInfo({ campaign }) {
     return (
         <div className="mt-4 grid grid-cols-2 gap-2">
             <InfoItem icon={Bookmark} label={campaign?.category} />
-            <InfoItem icon={Building2} label={campaign?.organizer} />
+            <InfoItem icon={CalendarDays} label={campaign?.startDate?.split('T')[0]} />
             <InfoItem icon={MapPin} label={campaign?.location} />
             <InfoItem
                 icon={CalendarDays}
-                label={campaign?.date?.split("T")[0]}
+                label={campaign?.endDate?.split("T")[0]}
             />
         </div>
     );
