@@ -16,9 +16,9 @@ export const createCampaignSchema = z.object({
 
   location: z.string().min(2, "Location is required"),
 
-  date: z.coerce.date().refine((d) => d > new Date(), {
-    message: "Date must be in the future",
-  }),
+  startDate: z.coerce.date(),
+
+  endDate: z.coerce.date(),
 
   createdBy: z.string({
     required_error: "Creator (createdBy) is required",
@@ -35,7 +35,13 @@ export const updateCampaignSchema = z.object({
 
   location: z.string().optional(),
 
-  date: z.coerce.date().optional(),
+  startDate: z.coerce.date().optional(),
+
+  endDate: z.coerce.date().optional(),
+
+  createdBy: z.string({
+    required_error: "Creator (createdBy) is required",
+  }),
 });
 
 export const updateStatusSchema = z.object({

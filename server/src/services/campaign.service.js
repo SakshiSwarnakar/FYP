@@ -2,6 +2,7 @@ import { HTTP_STATUS } from "../constants/http.js";
 import assertOrThrow from "../utils/assertOrThrow.js";
 import { uploadToCloudinary } from "../utils/cloudinary.js";
 
+import campaignModel from "../models/campaign.model.js";
 import {
   addCampaignRating,
   addCampaignVolunteer,
@@ -11,12 +12,20 @@ import {
   getCampaigns,
   getCampaignWithVolunteerRequests,
   updateCampaign,
-  updateCampaignStatus,
 } from "../repository/campaign.repository.js";
+import { getCampaignPhase } from "../utils/campaignPhase.js";
 
 export const createCampaignService = async (data) => {
-  const { title, description, category, location, date, createdBy, files } =
-    data;
+  const {
+    title,
+    description,
+    category,
+    location,
+    startDate,
+    endDate,
+    createdBy,
+    files,
+  } = data;
 
   let attachments = [];
 
@@ -24,7 +33,7 @@ export const createCampaignService = async (data) => {
     const uploadPromises = files.map(async (file) => {
       const uploaded = await uploadToCloudinary(
         file.buffer,
-        "campaign_attachments"
+        "campaign_attachments",
       );
 
       return {
@@ -42,7 +51,8 @@ export const createCampaignService = async (data) => {
     description,
     category,
     location,
-    date,
+    startDate,
+    endDate,
     createdBy,
     attachments,
   };
@@ -58,78 +68,90 @@ export const createCampaignService = async (data) => {
   };
 };
 
-export const getCampaignsService = async (filters = {}) => {
-  const campaigns = await getCampaigns(filters);
+export const getCampaignsService = async (filters = {}, userId, role) => {
+  const { page = 1, limit = 10, ...queryFilters } = filters;
 
-  return campaigns.map(
-    ({
-      _id,
-      title,
-      location,
-      date,
-      category,
-      status,
-      createdBy,
-      createdAt,
-      attachments,
-    }) => ({
-      id: _id,
-      title,
-      location,
-      date,
-      category,
-      status,
-      createdBy,
-      createdAt,
-      attachments,
-    })
-  );
+  if (role === "ADMIN") {
+    queryFilters.createdBy = userId;
+  }
+
+  if (!role || role === "VOLUNTEER") {
+    queryFilters.status = "PUBLISHED";
+  }
+
+  const result = await getCampaigns(queryFilters, {
+    page: Number(page),
+    limit: Number(limit),
+  });
+
+  const campaigns = result.data.map((campaign) => {
+    let myVolunteerStatus = null;
+
+    if (userId) {
+      const myVolunteer = campaign.volunteers.find(
+        (v) => v.volunteer?._id.toString() === userId.toString(),
+      );
+      myVolunteerStatus = myVolunteer?.status ?? null;
+    }
+    const phase = getCampaignPhase(campaign);
+    console.log("Campaign Phase:", phase);
+
+    return {
+      id: campaign._id,
+      title: campaign.title,
+      location: campaign.location,
+      category: campaign.category,
+      status: campaign.status,
+      phase,
+      startDate: campaign.startDate,
+      endDate: campaign.endDate,
+      createdBy: campaign.createdBy,
+      createdAt: campaign.createdAt,
+      attachments: campaign.attachments,
+      volunteers: campaign.volunteers,
+      myVolunteerStatus,
+    };
+  });
+
+  return {
+    campaigns,
+    pagination: result.pagination,
+  };
 };
 
-export const getCampaignByIdService = async (id) => {
+export const getCampaignByIdService = async (id, userId) => {
   const campaign = await getCampaignById(id);
   assertOrThrow(campaign, HTTP_STATUS.NOT_FOUND, "Campaign not found");
 
-  const {
-    _id,
-    title,
-    description,
-    category,
-    location,
-    date,
-    status,
-    attachments,
-    volunteers,
-    ratings,
-    createdBy,
-    createdAt,
-    updatedAt,
-  } = campaign;
+  const myVolunteer = campaign.volunteers.find(
+    (v) => v.volunteer?._id.toString() === userId?.toString(),
+  );
+  if (
+    campaign.status === "DRAFT" &&
+    campaign.createdBy._id.toString() !== userId?.toString()
+  ) {
+    assertOrThrow(false, HTTP_STATUS.FORBIDDEN, "Campaign not accessible");
+  }
+  const phase = getCampaignPhase(campaign);
 
   return {
-    id: _id,
-    title,
-    description,
-    category,
-    location,
-    date,
-    status,
-    attachments: attachments.map((att) => ({
-      url: att.url,
-      public_id: att.public_id,
-      type: att.type,
-      id: att._id,
-    })),
-    volunteers,
-    ratings: ratings.map((rating) => ({
-      volunteer: rating.volunteer,
-      rating: rating.rating,
-      comment: rating.comment,
-      createdAt: rating.createdAt,
-    })),
-    createdBy,
-    createdAt,
-    updatedAt,
+    id: campaign._id,
+    title: campaign.title,
+    description: campaign.description,
+    category: campaign.category,
+    location: campaign.location,
+    startDate: campaign.startDate,
+    endDate: campaign.endDate,
+    phase,
+
+    status: campaign.status,
+    attachments: campaign.attachments,
+    volunteers: campaign.volunteers,
+    ratings: campaign.ratings,
+    createdBy: campaign.createdBy,
+    createdAt: campaign.createdAt,
+    updatedAt: campaign.updatedAt,
+    myVolunteerStatus: myVolunteer ? myVolunteer.status : null,
   };
 };
 
@@ -137,37 +159,45 @@ export const respondToVolunteerRequestService = async (
   campaignId,
   volunteerId,
   organizerId,
-  status
+  status,
 ) => {
   assertOrThrow(
     ["accepted", "rejected"].includes(status),
     HTTP_STATUS.BAD_REQUEST,
-    "Invalid status"
+    "Invalid status",
   );
 
   const campaign = await getCampaignById(campaignId);
+
   assertOrThrow(campaign, HTTP_STATUS.NOT_FOUND, "Campaign not found");
 
   assertOrThrow(
-    campaign.createdBy.toString() === organizerId.toString(),
+    campaign.createdBy._id.equals(organizerId),
     HTTP_STATUS.FORBIDDEN,
-    "You are not authorized to manage volunteers for this campaign"
+    "You are not authorized to manage volunteers for this campaign",
+  );
+  const phase = getCampaignPhase(campaign);
+
+  assertOrThrow(
+    phase === "ONGOING" || phase === "UPCOMING",
+    HTTP_STATUS.BAD_REQUEST,
+    "Cannot manage volunteers for completed campaigns",
   );
 
-  const volunteerRequest = campaign.volunteers.find(
-    (v) => v.volunteer.toString() === volunteerId
+  const volunteerRequest = campaign.volunteers.find(({ volunteer }) =>
+    volunteer._id.equals(volunteerId),
   );
 
   assertOrThrow(
     volunteerRequest,
     HTTP_STATUS.NOT_FOUND,
-    "Volunteer request not found"
+    "Volunteer request not found",
   );
 
   assertOrThrow(
     volunteerRequest.status === "pending",
     HTTP_STATUS.BAD_REQUEST,
-    "Volunteer request already processed"
+    "Volunteer request already processed",
   );
 
   volunteerRequest.status = status;
@@ -184,15 +214,25 @@ export const respondToVolunteerRequestService = async (
 };
 
 export const updateCampaignService = async (id, data) => {
-  const { title, description, category, location, date, status, files } = data;
+  const campaign = await getCampaignById(id);
+  assertOrThrow(campaign, HTTP_STATUS.NOT_FOUND, "Campaign not found");
+
+  assertOrThrow(
+    campaign.status === "DRAFT",
+    HTTP_STATUS.BAD_REQUEST,
+    "Published campaigns cannot be edited",
+  );
+
+  const { title, description, category, location, startDate, endDate, files } =
+    data;
 
   let updateData = {
     title,
     description,
     category,
     location,
-    date,
-    status,
+    startDate,
+    endDate,
   };
 
   if (files && files.length > 0) {
@@ -200,7 +240,7 @@ export const updateCampaignService = async (id, data) => {
       files.map(async (file) => {
         const uploaded = await uploadToCloudinary(
           file.buffer,
-          "campaign_attachments"
+          "campaign_attachments",
         );
 
         return {
@@ -208,7 +248,7 @@ export const updateCampaignService = async (id, data) => {
           public_id: uploaded.public_id,
           type: uploaded.resource_type,
         };
-      })
+      }),
     );
 
     updateData.attachments = newAttachments;
@@ -236,24 +276,37 @@ export const deleteCampaignService = async (id) => {
 };
 
 export const applyForCampaignService = async (campaignId, userId) => {
-  console.log("here");
   const campaign = await getCampaignById(campaignId);
   assertOrThrow(campaign, HTTP_STATUS.NOT_FOUND, "Campaign not found");
 
   assertOrThrow(
-    campaign.createdBy.toString() !== userId.toString(),
+    campaign.status === "PUBLISHED",
     HTTP_STATUS.BAD_REQUEST,
-    "Organizers cannot apply as volunteers"
+    "Cannot apply to an unpublished campaign",
   );
 
-  const alreadyApplied = campaign.volunteers?.some(
-    (v) => v.volunteer.toString() === userId.toString()
+  const phase = getCampaignPhase(campaign);
+
+  assertOrThrow(
+    phase === "ONGOING" || phase === "UPCOMING",
+    HTTP_STATUS.BAD_REQUEST,
+    "Cannot apply to a completed campaign",
+  );
+
+  assertOrThrow(
+    campaign.createdBy.toString() !== userId.toString(),
+    HTTP_STATUS.BAD_REQUEST,
+    "Organizers cannot apply as volunteers",
+  );
+
+  const alreadyApplied = campaign.volunteers.some(
+    (v) => v.volunteer._id.toString() === userId.toString(),
   );
 
   assertOrThrow(
     !alreadyApplied,
     HTTP_STATUS.BAD_REQUEST,
-    "You have already applied as a volunteer"
+    "You have already applied as a volunteer",
   );
 
   const updated = await addCampaignVolunteer(campaignId, {
@@ -268,7 +321,7 @@ export const applyForCampaignService = async (campaignId, userId) => {
 
 export const getCampaignVolunteerRequestsService = async (
   campaignId,
-  organizerId
+  organizerId,
 ) => {
   const campaign = await getCampaignWithVolunteerRequests(campaignId);
   assertOrThrow(campaign, HTTP_STATUS.NOT_FOUND, "Campaign not found");
@@ -276,11 +329,18 @@ export const getCampaignVolunteerRequestsService = async (
   assertOrThrow(
     campaign.createdBy.toString() === organizerId.toString(),
     HTTP_STATUS.FORBIDDEN,
-    "You are not authorized to view volunteer requests for this campaign"
+    "You are not authorized to view volunteer requests for this campaign",
+  );
+  const phase = getCampaignPhase(campaign);
+
+  assertOrThrow(
+    phase === "ONGOING" || phase === "UPCOMING",
+    HTTP_STATUS.BAD_REQUEST,
+    "Cannot view volunteer requests for completed campaigns",
   );
 
   const pendingRequests = campaign.volunteers.filter(
-    (v) => v.status === "pending"
+    (v) => v.status === "pending",
   );
 
   return {
@@ -294,16 +354,39 @@ export const getCampaignVolunteerRequestsService = async (
   };
 };
 
-export const updateCampaignStatusService = async (id, status) => {
-  const updated = await updateCampaignStatus(id, status);
-  assertOrThrow(updated, HTTP_STATUS.NOT_FOUND, "Campaign not found");
+export const publishCampaignService = async (campaignId, userId) => {
+  const campaign = await campaignModel.findById(campaignId);
+  assertOrThrow(campaign, HTTP_STATUS.NOT_FOUND, "Campaign not found");
+  const phase = getCampaignPhase(campaign);
 
-  const { _id, status: newStatus } = updated;
+  assertOrThrow(
+    phase !== "COMPLETED",
+    HTTP_STATUS.BAD_REQUEST,
+    "Cannot publish a completed campaign",
+  );
 
-  return {
-    id: _id,
-    status: newStatus,
-  };
+  assertOrThrow(
+    campaign.createdBy.toString() === userId.toString(),
+    HTTP_STATUS.FORBIDDEN,
+    "You are not allowed to publish this campaign",
+  );
+
+  assertOrThrow(
+    campaign.status === "DRAFT",
+    HTTP_STATUS.BAD_REQUEST,
+    "Campaign is already published",
+  );
+
+  assertOrThrow(
+    campaign.startDate && campaign.endDate,
+    HTTP_STATUS.BAD_REQUEST,
+    "Campaign must have start and end dates before publishing",
+  );
+
+  campaign.status = "PUBLISHED";
+  await campaign.save();
+
+  return campaign;
 };
 
 export const addCampaignRatingService = async (campaignId, data) => {

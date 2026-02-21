@@ -24,14 +24,19 @@ const campaignSchema = new mongoose.Schema(
       required: true,
     },
 
-    date: {
+    startDate: {
+      type: Date,
+      required: true,
+    },
+
+    endDate: {
       type: Date,
       required: true,
     },
 
     status: {
       type: String,
-      enum: ["DRAFT", "PUBLISHED", "ONGOING", "COMPLETED"],
+      enum: ["DRAFT", "PUBLISHED"],
       default: "DRAFT",
     },
 
@@ -64,6 +69,14 @@ const campaignSchema = new mongoose.Schema(
           enum: ["pending", "accepted", "rejected"],
           default: "pending",
         },
+        attendanceStatus: {
+          type: String,
+          enum: ["present", "absent"],
+          default: null,
+        },
+        attendanceMarkedAt: {
+          type: Date,
+        },
         appliedAt: {
           type: Date,
           default: Date.now,
@@ -93,7 +106,7 @@ const campaignSchema = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 export default mongoose.model("Campaign", campaignSchema);

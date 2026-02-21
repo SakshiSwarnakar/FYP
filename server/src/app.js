@@ -3,9 +3,11 @@ import express from "express";
 import { corsMiddleware } from "./middleware/cors.js";
 import { errorHandler, notFound } from "./middleware/errorHandlers.js";
 
+import attendanceRoutes from "./routes/attendance.route.js";
 import authRoutes from "./routes/auth.route.js";
 import campaignRoutes from "./routes/campaign.route.js";
 import healthRoute from "./routes/health.route.js";
+import taskRoutes from "./routes/task.route.js";
 import userRoutes from "./routes/user.route.js";
 
 const app = express();
@@ -18,6 +20,8 @@ app.use("/health", healthRoute);
 app.use("/api/auth", authRoutes);
 app.use("/api/campaign", campaignRoutes);
 app.use("/api/user", userRoutes);
+app.use("/api/attendance", attendanceRoutes);
+app.use("/api/task", taskRoutes);
 
 app.use(notFound);
 app.use(errorHandler);
