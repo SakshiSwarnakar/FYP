@@ -1,17 +1,15 @@
-import { useState } from "react";
 import { ChevronRight, Megaphone } from "lucide-react";
+import { Link } from "react-router";
+import Loading from "../components/Loading";
+import { useCampaign } from "../context/CampaignContext";
 import CampaignCard from "../features/campaign/CampaignCard";
 import CategoryTabs from "../features/home/CategoryTab";
 import CampaignFeatures from "../features/home/Features";
 import HeroSection from "../features/home/HeroSection";
-import Loading from "../components/Loading";
-import { useCampaign } from "../context/CampaignContext";
 import HowItWorks from "../features/home/HowItWorks";
 import WhyWorkWithUs from "../features/home/WhyWorkWithUs";
-import { Link } from "react-router";
 
 function Home() {
-
   const { status, campaigns, choseCampaign, handleRegister } = useCampaign();
   const isLoading = status === "loading";
 
@@ -58,15 +56,15 @@ function Home() {
           </div>
         )}
 
-        {!isLoading && !campaigns?.length && (
+        {!isLoading && !campaigns?.campaigns?.length && (
           <div className="mt-8 rounded-2xl border border-primary/20 bg-white/60 shadow-sm overflow-hidden">
             <NoCampaignsFound />
           </div>
         )}
 
-        {!isLoading && campaigns?.length > 0 && (
+        {!isLoading && campaigns?.campaigns?.length > 0 && (
           <div className="grid-container mt-6">
-            {campaigns.slice(0, 4).map((event) => (
+            {campaigns?.campaigns?.slice(0, 4).map((event) => (
               <CampaignCard
                 key={event.id}
                 campaign={event}
@@ -82,7 +80,6 @@ function Home() {
 }
 
 export default Home;
-
 
 export function NoCampaignsFound() {
   return (

@@ -1,41 +1,44 @@
+import { CheckCircle2 } from "lucide-react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import Loading from "../../components/Loading";
-import CampaignCard from "../../features/campaign/CampaignCard";
-import { useCampaign } from "../../context/CampaignContext";
 import { useAuth } from "../../context/AuthContext";
-import { CheckCircle2 } from "lucide-react";
+import { useCampaign } from "../../context/CampaignContext";
+import CampaignCard from "../../features/campaign/CampaignCard";
 import CampaignVolunteers from "./CampaignVolunteers";
 
 function VolunteerAccepted() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
-  const { campaigns, fetchCampaigns, status, choseCampaign, handleRegister } = useCampaign();
 
-
-
-  const campaignList = Array.isArray(campaigns)
-    ? campaigns
-    : campaigns?.data ?? [];
-  const acceptedCampaigns = campaignList.filter(
-    (c) => c.myVolunteerStatus === "accepted"
-  );
+  const {
+    campaigns,
+    status: campaignStatus,
+    fetchCampaigns,
+    choseCampaign,
+    handleRegister,
+  } = useCampaign();
 
   useEffect(() => {
-    fetchCampaigns()
-
     if (!loading && !user) {
       navigate("/");
+      return;
     }
-  }, [loading, user, navigate]);
+    // Let backend do the filtering — pagination will be correct
+    if (user?.role === "VOLUNTEER") {
+      fetchCampaigns({ myVolunteerStatus: "accepted" });
+    }
+  }, [loading, user]);
 
-  if (loading || status === "loading") {
+  if (loading || campaignStatus === "loading") {
     return <Loading />;
   }
 
   if (user?.role === "ADMIN") {
     return <CampaignVolunteers />;
   }
+
+  const acceptedCampaigns = campaigns?.campaigns || [];
 
   return (
     <>
@@ -44,6 +47,7 @@ function VolunteerAccepted() {
           Accepted Events
         </h1>
       </div>
+
       <p className="text-accent/80 mb-6">
         Campaigns where your volunteer application was accepted.
       </p>

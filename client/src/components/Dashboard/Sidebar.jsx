@@ -1,101 +1,138 @@
-import { NavLink } from "react-router";
-import { useAuth } from "../../context/AuthContext";
 import {
   CheckCircle2,
+  ClipboardCheck,
   Megaphone,
   PartyPopper,
   UserCircle,
-  UserCheck,
   UsersRound,
   XCircle,
 } from "lucide-react";
+import { NavLink } from "react-router";
+import { useAuth } from "../../context/AuthContext";
 
-const navLinkClass = (isActive) =>
-  `flex items-center gap-3 min-w-0 
-   rounded-lg py-2.5 px-3 text-sm font-medium
-   transition-all duration-200
-   ${isActive
-    ? "bg-primary text-white shadow-md"
-    : "text-accent hover:bg-primary/10 hover:text-primary"
-  }`;
+const NavItem = ({ to, end, icon, label }) => (
+  <NavLink
+    to={to}
+    end={end}
+    className={({ isActive }) =>
+      `group flex items-center gap-3 rounded-xl py-2.5 px-3 text-sm font-medium transition-all duration-200 min-w-0
+      ${
+        isActive
+          ? "bg-primary text-white shadow-sm shadow-primary/25"
+          : "text-gray-500 hover:bg-primary/8 hover:text-primary"
+      }`
+    }
+  >
+    {({ isActive }) => (
+      <>
+        <span
+          className={`shrink-0 transition-transform duration-200 ${!isActive && "group-hover:scale-110"}`}
+        >
+          {icon}
+        </span>
+        <span className="hidden md:block truncate">{label}</span>
+      </>
+    )}
+  </NavLink>
+);
+
+const SectionLabel = ({ children }) => (
+  <p className="hidden md:block px-3 pt-1 pb-2 text-[10px] font-bold uppercase tracking-widest text-gray-300 select-none">
+    {children}
+  </p>
+);
+
+const Divider = () => (
+  <div className="hidden md:block my-2 mx-3 border-t border-primary/8" />
+);
 
 function Sidebar() {
   const { user } = useAuth();
 
+  const sidebarBase = `
+    w-14 md:w-56 h-[85vh] sticky top-24 ml-1
+    flex flex-col overflow-hidden
+    bg-white border border-primary/12 rounded-2xl shadow-sm
+  `;
+
   if (user?.role === "ADMIN") {
     return (
-      <div className="w-12 h-[85vh] overflow-y-auto sticky top-25 ml-1 md:w-52 border border-primary/10 rounded-xl overflow-hidden md:p-2 flex flex-col bg-white/50 shadow-md">
-        <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent/70 hidden md:block">
-          Dashboard
-        </p>
-        <nav className="space-y-1 flex flex-col">
-          <NavLink
+      <aside className={sidebarBase}>
+        {/* Top accent strip */}
+        <div className="h-0.5 w-full bg-gradient-to-r from-primary/30 via-primary/60 to-primary/30 flex-shrink-0" />
+
+        <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
+          <SectionLabel>Dashboard</SectionLabel>
+
+          <NavItem
             to="/dashboard/campaign"
             end
-            className={({ isActive }) => navLinkClass(isActive)}
-          >
-            <PartyPopper size={20} className="shrink-0" />
-            <span className="hidden md:inline">My Events</span>
-          </NavLink>
-          <NavLink
+            icon={<PartyPopper size={18} />}
+            label="My Events"
+          />
+          <NavItem
             to="/dashboard/create-campaign"
-            className={({ isActive }) => navLinkClass(isActive)}
-          >
-            <Megaphone size={20} className="shrink-0" />
-            <span className="hidden md:inline">Create Event</span>
-          </NavLink>
-          <NavLink
+            icon={<Megaphone size={18} />}
+            label="Create Event"
+          />
+
+          <Divider />
+          <SectionLabel>Management</SectionLabel>
+
+          <NavItem
             to="/dashboard/volunteer-management"
-            className={({ isActive }) => navLinkClass(isActive)}
-          >
-            <UsersRound size={20} className="shrink-0" />
-            <span className="hidden md:block flex-1 overflow-hidden whitespace-nowrap text-ellipsis">
-              Volunteer Management
-            </span>
-          </NavLink>
-          <NavLink
+            icon={<UsersRound size={18} />}
+            label="Volunteers"
+          />
+          <NavItem
+            to="/dashboard/task-review"
+            icon={<ClipboardCheck size={18} />}
+            label="Task Review"
+          />
+
+          <Divider />
+          <SectionLabel>Account</SectionLabel>
+
+          <NavItem
             to="/dashboard/profile"
-            className={({ isActive }) => navLinkClass(isActive)}
-          >
-            <UserCircle size={20} className="shrink-0" />
-            <span className="hidden md:inline">Profile</span>
-          </NavLink>
-        </nav>
-      </div>
+            icon={<UserCircle size={18} />}
+            label="Profile"
+          />
+        </div>
+      </aside>
     );
   }
 
   if (user?.role === "VOLUNTEER") {
     return (
-      <div className="w-12 h-[85vh] overflow-y-auto sticky top-25 ml-1 md:w-52 border border-primary rounded-xl overflow-hidden p-2 flex flex-col bg-white/50 shadow-sm">
-        <p className="px-2 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent/70 hidden md:block">
-          My applications
-        </p>
-        <nav className="space-y-1 flex flex-col">
-          <NavLink
+      <aside className={sidebarBase}>
+        <div className="h-0.5 w-full bg-gradient-to-r from-primary/30 via-primary/60 to-primary/30 flex-shrink-0" />
+
+        <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
+          <SectionLabel>Account</SectionLabel>
+
+          <NavItem
             to="/dashboard/profile"
             end
-            className={({ isActive }) => navLinkClass(isActive)}
-          >
-            <UserCircle size={20} className="shrink-0" />
-            <span className="hidden md:inline">Profile</span>
-          </NavLink>
-          <NavLink
+            icon={<UserCircle size={18} />}
+            label="Profile"
+          />
+
+          <Divider />
+          <SectionLabel>My Applications</SectionLabel>
+
+          <NavItem
             to="accepted/campaign"
-            className={({ isActive }) => navLinkClass(isActive)}
-          >
-            <CheckCircle2 size={20} className="shrink-0" />
-            <span className="hidden md:inline">Accepted</span>
-          </NavLink>
-          <NavLink
+            icon={<CheckCircle2 size={18} />}
+            label="Accepted"
+          />
+          <NavItem
             to="rejected/campaign"
-            className={({ isActive }) => navLinkClass(isActive)}
-          >
-            <XCircle size={20} className="shrink-0" />
-            <span className="hidden md:inline">Rejected</span>
-          </NavLink>
-        </nav>
-      </div>
+            icon={<XCircle size={18} />}
+            label="Rejected"
+          />
+        </div>
+      </aside>
     );
   }
 

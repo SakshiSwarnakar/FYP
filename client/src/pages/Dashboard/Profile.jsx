@@ -92,6 +92,7 @@ function VolunteerProfile() {
   if (authLoading || profileLoading) return <Loading />;
   if (!user) return null;
 
+
   const displayName =
     user.firstName && user.lastName
       ? `${user.firstName} ${user.lastName}`.trim()

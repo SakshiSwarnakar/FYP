@@ -1,13 +1,18 @@
+import http from "http";
 import mongoose from "mongoose";
 import app from "./src/app.js";
 import { connectDB } from "./src/config/db.js";
 import { ENV } from "./src/config/env.js";
+import { initSocket } from "./src/socket/socket.js";
 
 const startServer = async () => {
   try {
     await connectDB();
 
-    const server = app.listen(ENV.PORT, () => {
+    const server = http.createServer(app);
+    initSocket(server);
+
+    server.listen(ENV.PORT, () => {
       console.log(`Server running on port ${ENV.PORT}`);
     });
 

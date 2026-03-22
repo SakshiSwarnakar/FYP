@@ -1,4 +1,6 @@
+import { createHash } from "crypto";
 import { HTTP_STATUS } from "../constants/http.js";
+import userModel from "../models/user.model.js";
 import {
   createUser,
   findUserByEmail,
@@ -11,6 +13,7 @@ import {
   generateRefreshToken,
   verifyRefreshToken,
 } from "../utils/jwt.js";
+import { sendEmail } from "../utils/sendEmail.js";
 
 export const registerVolunteerService = async (data, file) => {
   const {
@@ -27,7 +30,7 @@ export const registerVolunteerService = async (data, file) => {
   assertOrThrow(
     !existing,
     HTTP_STATUS.BAD_REQUEST,
-    "Email is already registered"
+    "Email is already registered",
   );
 
   let profilePic = null;
@@ -80,7 +83,7 @@ export const registerOrganizerService = async (data, file) => {
   assertOrThrow(
     !existingUser,
     HTTP_STATUS.BAD_REQUEST,
-    "User email is already registered"
+    "User email is already registered",
   );
 
   if (organizationEmail) {
@@ -88,7 +91,7 @@ export const registerOrganizerService = async (data, file) => {
     assertOrThrow(
       !existingOrg,
       HTTP_STATUS.BAD_REQUEST,
-      "Organization email is already registered"
+      "Organization email is already registered",
     );
   }
 
@@ -152,7 +155,7 @@ export const refreshTokenService = async (refreshToken) => {
   assertOrThrow(
     refreshToken,
     HTTP_STATUS.UNAUTHORIZED,
-    "Refresh token is missing"
+    "Refresh token is missing",
   );
 
   const payload = verifyRefreshToken(refreshToken);
@@ -188,11 +191,8 @@ export const getMeService = async (userId) => {
 
 export const forgotPasswordService = async (email) => {
   const user = await findUserByEmail(email);
-  assertOrThrow(
-    user,
-    HTTP_STATUS.OK,
-    "If this email exists, a reset link was sent"
-  );
+
+  assertOrThrow(user, HTTP_STATUS.NOT_FOUND, "User not found");
 
   const { rawToken, hashedToken } = createPasswordResetToken();
 
@@ -201,18 +201,32 @@ export const forgotPasswordService = async (email) => {
 
   await user.save({ validateBeforeSave: false });
 
-  return rawToken;
+  const message = `
+Your password reset token:
+
+${rawToken}
+
+Enter this token in the reset password form.
+
+This token expires in 15 minutes.
+`;
+
+  await sendEmail(user.email, "Password Reset Token", message);
 };
 
 export const resetPasswordService = async (token, newPassword) => {
-  const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+  const hashedToken = createHash("sha256").update(token).digest("hex");
 
-  const user = await findUserByResetToken(hashedToken);
+  const user = await userModel
+    .findOne({
+      resetPasswordToken: hashedToken,
+    })
+    .select("+resetPasswordToken +resetPasswordExpire");
 
   assertOrThrow(
     user && user.resetPasswordExpire > Date.now(),
     HTTP_STATUS.BAD_REQUEST,
-    "Reset token is invalid or expired"
+    "Reset token is invalid or expired",
   );
 
   user.password = newPassword;
@@ -220,8 +234,4 @@ export const resetPasswordService = async (token, newPassword) => {
   user.resetPasswordExpire = undefined;
 
   await user.save();
-
-  return {
-    message: "Password has been reset successfully",
-  };
 };

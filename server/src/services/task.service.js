@@ -12,6 +12,9 @@ import {
 } from "../repository/task.repository.js";
 import assertOrThrow from "../utils/assertOrThrow.js";
 import { getCampaignPhase } from "../utils/campaignPhase.js";
+import { uploadToCloudinary } from "../utils/cloudinary.js";
+import { updateVolunteerLevelAndBadge } from "../utils/volunteerLevel.js";
+import { notifyTaskSubmissionReviewed } from "./notification.service.js";
 
 export const createTaskService = async (campaignId, userId, data) => {
   const campaign = await getCampaignById(campaignId);
@@ -80,7 +83,7 @@ export const submitTaskService = async (
   taskId,
   volunteerId,
   summary,
-  proof,
+  proofFiles,
 ) => {
   const task = await getTaskById(taskId);
   assertOrThrow(task, HTTP_STATUS.NOT_FOUND, "Task not found");
@@ -116,12 +119,27 @@ export const submitTaskService = async (
     "You have already submitted this task",
   );
 
+  let proof = [];
+  if (proofFiles.length > 0) {
+    const uploadPromises = proofFiles.map(async (file) => {
+      const uploaded = await uploadToCloudinary(file.buffer, "task_proofs");
+      return {
+        url: uploaded.secure_url,
+        public_id: uploaded.public_id,
+        type: uploaded.resource_type,
+      };
+    });
+
+    proof = await Promise.all(uploadPromises);
+  }
+
   const submission = await createTaskSubmissionRepo({
     task: taskId,
     volunteer: volunteerId,
     summary,
     proof,
   });
+
   return submission;
 };
 
@@ -145,7 +163,6 @@ export const reviewTaskSubmissionService = async (
   submissionId,
   organizerId,
   status,
-  pointsAwarded,
 ) => {
   assertOrThrow(
     ["accepted", "rejected"].includes(status),
@@ -157,25 +174,40 @@ export const reviewTaskSubmissionService = async (
   assertOrThrow(submission, HTTP_STATUS.NOT_FOUND, "Submission not found");
 
   const campaign = await getCampaignById(submission.task.campaign);
+  const createdByUser = campaign.createdBy;
   assertOrThrow(
-    campaign.createdBy._id.toString() === organizerId.toString(),
+    createdByUser._id.toString() === organizerId.toString(),
     HTTP_STATUS.FORBIDDEN,
     "Not authorized",
   );
 
   submission.status = status;
-  submission.pointsAwarded = pointsAwarded || 0;
   submission.reviewedBy = organizerId;
   submission.reviewedAt = new Date();
 
   await submission.save();
+  await notifyTaskSubmissionReviewed({
+    sender: organizerId,
+    recipient: submission.volunteer,
+    campaign,
+    task: submission.task,
+    status,
+  });
 
   if (status === "accepted") {
     const user = await userModel.findById(submission.volunteer);
-    user.badges.push({
-      name: `Task Completed: ${submission.task.title}`,
-    });
-    await user.save();
+
+    const existingBadge = user.badges.find(
+      (b) => b.name === `Task Completed: ${submission.task.title}`,
+    );
+    if (!existingBadge) {
+      user.badges.push({
+        name: `Task Completed: ${submission.task.title}`,
+        earnedAt: new Date(),
+      });
+      await user.save();
+      await updateVolunteerLevelAndBadge(submission.volunteer);
+    }
   }
 
   return submission;

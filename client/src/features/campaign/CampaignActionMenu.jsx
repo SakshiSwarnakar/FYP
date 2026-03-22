@@ -11,29 +11,27 @@ function CampaignActionsMenu({
   popupRef,
 }) {
   return (
-    <div
-      ref={popupRef}
-      className="relative"
-      style={{ transformOrigin: "top right" }}
-    >
+    <div ref={popupRef} className="relative">
       {isAdmin && isDashboard && (
         <button
           onClick={() =>
             popup === campaign.id ? setPopup(null) : setPopup(campaign.id)
           }
-          className="cursor-pointer ellipsis-btn" // add this class!
+          className="cursor-pointer p-2 rounded-full hover:bg-primary/20 text-accent transition-colors"
         >
-          <Info />
+          <Info size={18} />
         </button>
       )}
+
       <div
-        className={`absolute top-8 right-0 bg-white shadow-xl rounded-xl overflow-hidden animate-[fadeIn_0.15s_ease-out,scaleIn_0.15s_ease-out] ${
-          popup === campaign?.id ? "block" : "hidden"
-        }`}
+        className={`absolute z-10 top-9 right-0 w-40 bg-white shadow-lg rounded-lg border border-gray-100 overflow-hidden transition-all duration-200 origin-top-right ${popup === campaign?.id
+            ? "scale-100 opacity-100"
+            : "scale-95 opacity-0 pointer-events-none"
+          }`}
       >
         <Link
           to={`create-campaign/${campaign.id}`}
-          className=" p-2 hover:bg-gray-100 w-full flex items-center gap-2"
+          className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-primary/10 transition-colors text-gray-700"
         >
           <Pencil size={16} /> Edit
         </Link>
@@ -43,7 +41,7 @@ function CampaignActionsMenu({
             setOpenModal(true);
             setPopup(null);
           }}
-          className="p-2 hover:bg-red-100 text-red-600 w-full flex items-center gap-2"
+          className="flex items-center gap-2 px-3 py-2 w-full text-sm text-red-600 hover:bg-red-50 transition-colors"
         >
           <Trash size={16} /> Delete
         </button>

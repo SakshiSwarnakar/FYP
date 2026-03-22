@@ -8,11 +8,14 @@ import {
   deleteFromCloudinary,
   uploadToCloudinary,
 } from "../utils/cloudinary.js";
+import { updateVolunteerLevelAndBadge } from "../utils/volunteerLevel.js";
 
 export const getUserProfileService = async (userId) => {
   const user = await findUserById(userId);
 
   assertOrThrow(user, HTTP_STATUS.NOT_FOUND, "User not found");
+
+  const { points, level } = await updateVolunteerLevelAndBadge(userId);
 
   const profile = {
     id: user._id,
@@ -28,6 +31,9 @@ export const getUserProfileService = async (userId) => {
     skills: user.skills ?? [],
     interests: user.interests ?? [],
     badges: user.badges ?? [],
+
+    points,
+    level,
 
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
@@ -47,12 +53,11 @@ export const getUserProfileService = async (userId) => {
 
   return profile;
 };
-
 export const updateUserProfileService = async (
   currentUser,
   targetUserId,
   data,
-  file
+  file,
 ) => {
   if (currentUser.role !== "ADMIN" && currentUser.id !== targetUserId) {
     throw new AppError("Forbidden", HTTP_STATUS.FORBIDDEN);

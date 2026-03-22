@@ -88,11 +88,22 @@ const userSchema = new mongoose.Schema(
 
     badges: [
       {
-        name: String,
-        icon: String,
+        name: { type: String, required: true },
+        icon: { type: String, default: null },
         earnedAt: { type: Date, default: Date.now },
+        taskId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Task",
+          default: null,
+        },
       },
     ],
+
+    level: {
+      type: String,
+      enum: ["Novice", "Apprentice", "Contributor", "Achiever", "Champion"],
+      default: "Novice",
+    },
 
     verificationToken: { type: String, select: false },
     verificationExpire: { type: Date, select: false },
@@ -107,7 +118,7 @@ const userSchema = new mongoose.Schema(
     timestamps: true,
     toJSON: { virtuals: true },
     toObject: { virtuals: true },
-  }
+  },
 );
 
 userSchema.virtual("fullName").get(function () {

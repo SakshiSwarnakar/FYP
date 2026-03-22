@@ -17,7 +17,6 @@ router.post(
   requireAuth,
   requireRole("ADMIN"),
   upload.array("attachments"),
-
   createTask,
 );
 
@@ -32,7 +31,6 @@ router.patch(
   "/tasks/submissions/:submissionId/review",
   requireAuth,
   requireRole("ADMIN"),
-
   reviewTaskSubmission,
 );
 

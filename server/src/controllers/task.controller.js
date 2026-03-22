@@ -30,14 +30,17 @@ export const getTasksByCampaign = asyncHandler(async (req, res) => {
 export const submitTask = asyncHandler(async (req, res) => {
   const taskId = req.params.taskId;
   const volunteerId = req.user.id;
-  const { summary, proof } = req.body;
+  const { summary } = req.body;
+
+  const proofFiles = req.files || [];
 
   const submission = await submitTaskService(
     taskId,
     volunteerId,
     summary,
-    proof,
+    proofFiles,
   );
+
   return success(res, "Task submitted successfully", submission);
 });
 

@@ -55,7 +55,10 @@ export const publishCampaign = asyncHandler(async (req, res) => {
 });
 
 export const addCampaignRating = asyncHandler(async (req, res) => {
-  const data = await addCampaignRatingService(req.params.id, req.body);
+  const userId = req.user.id;
+
+  const data = await addCampaignRatingService(req.params.id, userId, req.body);
+
   return success(res, "Rating submitted successfully", data);
 });
 

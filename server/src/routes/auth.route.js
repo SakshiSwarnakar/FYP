@@ -27,14 +27,14 @@ router.post(
   "/register/volunteer",
   upload.single("profilePic"),
   validate(registerVolunteerSchema),
-  registerVolunteer
+  registerVolunteer,
 );
 
 router.post(
   "/register/organizer",
   upload.single("organizationLogo"),
   validate(registerOrganizerSchema),
-  registerOrganizer
+  registerOrganizer,
 );
 
 router.post("/login", validate(loginSchema), loginUser);
@@ -43,7 +43,7 @@ router.post("/refresh-token", refreshAccessToken);
 
 router.post("/forgot-password", forgotPassword);
 
-router.post("/reset-password/:resetToken", resetPassword);
+router.post("/reset-password", resetPassword);
 
 router.post("/logout", requireAuth, logOutUser);
 

@@ -5,5 +5,4 @@ const assertOrThrow = (condition, statusCode, message, errors = null) => {
     throw new AppError(message, statusCode, errors);
   }
 };
-
 export default assertOrThrow;

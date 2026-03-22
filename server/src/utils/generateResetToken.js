@@ -1,12 +1,9 @@
-import crypto from "crypto";
+import { createHash } from "crypto";
 
 export const createPasswordResetToken = () => {
-  const rawToken = crypto.randomBytes(32).toString("hex");
+  const rawToken = Math.floor(1000 + Math.random() * 9000).toString();
 
-  const hashedToken = crypto
-    .createHash("sha256")
-    .update(rawToken)
-    .digest("hex");
+  const hashedToken = createHash("sha256").update(rawToken).digest("hex");
 
   return { rawToken, hashedToken };
 };

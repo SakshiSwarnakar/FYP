@@ -49,11 +49,7 @@ export const addCampaignAttachment = (id, attachment) => {
 export const addCampaignVolunteer = (campaignId, volunteerRegId) => {
   return Campaign.findByIdAndUpdate(
     campaignId,
-    {
-      $addToSet: {
-        volunteers: volunteerRegId,
-      },
-    },
+    { $addToSet: { volunteers: volunteerRegId } },
     { new: true, runValidators: true },
   );
 };
@@ -65,8 +61,17 @@ export const addCampaignRating = (campaignId, ratingData) => {
     { new: true, runValidators: true },
   );
 };
+
 export const getCampaigns = async (filters = {}, options = {}) => {
-  const { category, status, createdBy, location, search } = filters;
+  const {
+    category,
+    status,
+    createdBy,
+    location,
+    search,
+    volunteerStatus,
+    volunteerId,
+  } = filters;
   const query = {};
 
   if (category) query.category = category;
@@ -78,6 +83,15 @@ export const getCampaigns = async (filters = {}, options = {}) => {
       { title: { $regex: search, $options: "i" } },
       { description: { $regex: search, $options: "i" } },
     ];
+  }
+
+  if (volunteerStatus && volunteerId) {
+    query.volunteers = {
+      $elemMatch: {
+        volunteer: volunteerId,
+        status: volunteerStatus,
+      },
+    };
   }
 
   return paginate({

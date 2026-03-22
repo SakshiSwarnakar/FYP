@@ -8,16 +8,23 @@ const CampaignContext = createContext(null);
 export const CampaignProvider = ({ children }) => {
   const [campaigns, setCampaigns] = useState(null);
   const [activeCampaign, choseCampaign] = useState(null);
-  const [status, setStatus] = useState(); // error || loading || success
+  const [myAttendance, setMyAttendance] = useState(null);
+  // Change to an object to store comments by ratingId
+  const [commentsByRating, setCommentsByRating] = useState({});
+  const [status, setStatus] = useState(null); // error || loading || success
   const { user } = useAuth();
 
   useEffect(() => {
     if (user?.role === 'ADMIN') {
-      fetchCampaigns({ createdBy: user?.id })
+      fetchCampaigns({ createdBy: user?.id });
       return;
     }
-    fetchCampaigns()
+    fetchCampaigns();
   }, [user]);
+
+  const handlePagination = (page) => {
+    fetchCampaigns({ page });
+  };
 
   const fetchCampaigns = async (query = null) => {
     setStatus("loading");
@@ -25,10 +32,9 @@ export const CampaignProvider = ({ children }) => {
       const res = await api.get("/campaign", {
         params: query ? { ...query } : {},
       });
-      setCampaigns(res?.data?.campaigns);
+      setCampaigns(res?.data);
       setStatus("success");
     } catch (error) {
-      // toast.error(error.message);
       setStatus("error");
     } finally {
       setStatus(null);
@@ -38,7 +44,10 @@ export const CampaignProvider = ({ children }) => {
   const handleRegister = async (campaignId) => {
     try {
       const res = await api.post(`/campaign/${campaignId}/apply`, { user });
-      toast.success(res.message);
+      if (res.status == 'success') {
+        toast.success(res.message);
+        return 'pending';
+      }
     } catch (error) {
       toast.error(error?.message);
     }
@@ -46,15 +55,30 @@ export const CampaignProvider = ({ children }) => {
 
   const handlePublish = async (campaignId) => {
     try {
-      const res = await api.patch(`/campaign/${campaignId}/publish`)
-
+      const res = await api.patch(`/campaign/${campaignId}/publish`);
       if (res.status == 'success') {
-        toast.success(res.message)
+        toast.success(res.message);
+        return 'published';
       }
     } catch (error) {
-      toast.error(error.message)
+      toast.error(error.message);
     }
-  }
+  };
+
+  const fetchMyAttendance = async (query) => {
+    const params = new URLSearchParams(query).toString();
+
+    try {
+      const res = await api.get(`attendance/volunteers/me/attendance?${params}`);
+
+      if (res.status !== 'success') {
+        throw new Error(res.error.message);
+      }
+      setMyAttendance(res.data);
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
 
   const handleVolunteerAttendance = async (id, attendanceStatus, volunteerId) => {
     try {
@@ -64,12 +88,77 @@ export const CampaignProvider = ({ children }) => {
       );
       if (res.status == 'success') {
         toast.success(res.message);
-        fetchCampaigns({ createdBy: user?.id })
+        fetchCampaigns({ createdBy: user?.id });
         return res.data;
       }
     } catch (error) {
       toast.error(error.message);
     }
+  };
+
+  const deleteComment = async (commentId, ratingId) => {
+    try {
+      const res = await api.delete(`/comment/${commentId}`);
+
+      if (res.status !== "success") {
+        throw new Error("Failed to delete comment");
+      }
+
+      // Remove comment from the specific rating's comments
+      setCommentsByRating((prev) => ({
+        ...prev,
+        [ratingId]: prev[ratingId]?.filter((c) => c._id !== commentId) || []
+      }));
+
+      toast.success("Comment deleted");
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const addComment = async (id, ratingId, comment, parentId = null) => {
+    if (!comment.trim()) return;
+
+    try {
+      const res = await api.post(`/campaign/${id}/ratings/${ratingId}/comments`, { 
+        comment, 
+        parentId 
+      });
+
+      if (res.status !== "success") {
+        throw new Error(res?.data?.error?.message || "Error Adding Comment.");
+      }
+
+      toast.success("Comment Added");
+
+      // Refresh comments for this specific rating
+      loadComments(id, ratingId);
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  const loadComments = async (id, ratingId) => {
+    try {
+      const res = await api.get(`/campaign/${id}/ratings/${ratingId}/comments`);
+      if (res.status !== "success") {
+        throw new Error("Failed to load comments");
+      }
+      
+      // Store comments under the specific ratingId key
+      setCommentsByRating((prev) => ({
+        ...prev,
+        [ratingId]: res.data
+      }));
+
+    } catch (error) {
+      console.error(error.message);
+    }
+  };
+
+  // Helper function to get comments for a specific rating
+  const getCommentsByRating = (ratingId) => {
+    return commentsByRating[ratingId] || [];
   };
 
   return (
@@ -78,7 +167,15 @@ export const CampaignProvider = ({ children }) => {
         campaigns,
         activeCampaign,
         status,
+        myAttendance,
+        commentsByRating,
+        getCommentsByRating,
+        loadComments,
+        deleteComment,
+        addComment,
+        fetchMyAttendance,
         choseCampaign,
+        handlePagination,
         handleVolunteerAttendance,
         handleRegister,
         fetchCampaigns,

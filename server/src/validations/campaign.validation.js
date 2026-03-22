@@ -51,10 +51,6 @@ export const updateStatusSchema = z.object({
 });
 
 export const ratingSchema = z.object({
-  volunteer: z.string({
-    required_error: "Volunteer ID is required",
-  }),
-
   rating: z
     .number({
       required_error: "Rating is required",

@@ -1,3 +1,5 @@
+import { Link } from "react-router";
+
 export default function HeroSection() {
     return (
         <section className="min-h-[90vh] grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] items-center container mx-auto overflow-hidden gap-12">
@@ -20,9 +22,9 @@ export default function HeroSection() {
                 </p>
 
                 <div className="mt-8 flex flex-wrap gap-4">
-                    <button className="rounded-xl bg-linear-to-br from-primary to-accent px-6 py-3 font-semibold text-white shadow-lg transition hover:-translate-y-0.5">
+                    <Link to='/campaign' className="rounded-xl bg-linear-to-br from-primary to-accent px-6 py-3 font-semibold text-white shadow-lg transition hover:-translate-y-0.5">
                         Join Campaign
-                    </button>
+                    </Link>
 
                     <button className="rounded-xl border-2 border-border px-6 py-3 font-semibold text-accent transition hover:bg-secondary">
                         Learn More

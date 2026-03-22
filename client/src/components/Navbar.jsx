@@ -1,10 +1,13 @@
 import { Link, useLocation } from "react-router";
 import { useAuth } from "../context/AuthContext";
-import { Blend, House, LayoutGrid, LogIn } from "lucide-react";
+import { Blend, HandHeart, House, LayoutGrid, LogIn } from "lucide-react";
+import NotificationBell from "../features/notification/Notification";
+import CampaignChat from "../features/chat/Campaignchat";
 
 function Navbar() {
   const location = useLocation();
   const { user, loading } = useAuth();
+
 
   const navLinkClass = (path) => {
     const isActive = location.pathname === path;
@@ -15,7 +18,7 @@ function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-10 w-full bg-white/30 backdrop-blur-sm">
+    <nav className="sticky top-0 z-10 w-full bg-white/90 backdrop-blur-sm">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 lg:px-6">
         <Link
           to="/"
@@ -34,6 +37,12 @@ function Navbar() {
             <House size={18} className="shrink-0" />
             <span className="hidden sm:inline">Home</span>
           </Link>
+          <Link to="/campaign" className={navLinkClass("/campaign")}>
+            <HandHeart size={18} className="shrink-0" />
+            <span className="hidden sm:inline">Campaigns</span>
+          </Link>
+
+
 
           {!loading && user?.role == "ADMIN" && (
             <Link to="/dashboard/campaign" className={navLinkClass("/dashboard")}>
@@ -57,6 +66,12 @@ function Navbar() {
               <span>Log in</span>
             </Link>
           )}
+          {(!loading && (user?.role == 'ADMIN' || user?.role == "VOLUNTEER")) &&
+            (
+              <NotificationBell />
+            )}
+          {user && <CampaignChat currentUser={{ _id: user?.id, firstName: user?.firstName || "unknown", lastName: user?.lastName, role: user?.role }}
+          />}
         </div>
       </div>
     </nav>

@@ -1,3 +1,4 @@
+import { HTTP_STATUS } from "../constants/http.js";
 import {
   forgotPasswordService,
   getMeService,
@@ -33,13 +34,21 @@ export const getMe = asyncHandler(async (req, res) => {
 });
 
 export const forgotPassword = asyncHandler(async (req, res) => {
+  console.log("email is", req.body.email);
   const data = await forgotPasswordService(req.body.email);
-  return success(res, "Password reset link sent successfully", data);
+  return success(res, "Reset token generated successfully", data);
 });
 
 export const resetPassword = asyncHandler(async (req, res) => {
-  const data = await resetPasswordService(req.params.token, req.body.password);
-  return success(res, "Password has been reset successfully", data);
+  console.log("the request body is", req.body);
+  const { token, password } = req.body;
+  if (!token || !password) {
+    return res
+      .status(HTTP_STATUS.BAD_REQUEST)
+      .json({ message: "Token and password are required" });
+  }
+  await resetPasswordService(token, password);
+  return success(res, "Password has been reset successfully");
 });
 
 export const logOutUser = asyncHandler(async (req, res) => {

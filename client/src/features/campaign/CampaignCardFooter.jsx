@@ -1,27 +1,61 @@
 import { Link, useLocation, useNavigate } from "react-router";
 import { MessageSquareText } from "lucide-react";
 import { useCampaign } from "../../context/CampaignContext";
+import { useState } from "react";
 
 function EventCardFooter({ campaign, choseCampaign, user, location }) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   const { handleRegister, handlePublish } = useCampaign();
+
+  const [latestStatus, setLatestStatus] = useState(null);
+
+  const changeCampaignStatus = async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+
+    if (user.role == "VOLUNTEER") {
+      const status = await handleRegister(campaign?.id);
+      setLatestStatus(status);
+      return;
+    }
+
+    const status = await handlePublish(campaign?.id);
+    setLatestStatus(status);
+    return;
+  };
 
   const renderButton = () => {
     const loc =
       !location.pathname.includes("profile") ||
       !location.pathname.includes("dashboard");
+
     const role = user?.role == "VOLUNTEER";
-    const myStatus = campaign?.myVolunteerStatus;
+
+    const myStatus = latestStatus || campaign?.myVolunteerStatus;
+
     if (loc && role) {
       return myStatus == "pending"
         ? "Pending"
         : myStatus == "accepted"
-          ? "Accepted"
-          : myStatus == 'rejected' ? "Rejected"
-            : "Register";
+        ? "Accepted"
+        : myStatus == "rejected"
+        ? "Rejected"
+        : "Register";
     }
-    return user?.role == 'ADMIN' ? campaign.status == 'DRAFT' ? 'Publish' : "Published" : 'Register';
+
+    const adminStatus = latestStatus || campaign.status;
+
+    return user?.role == "ADMIN"
+      ? adminStatus == "DRAFT"
+        ? "Publish"
+        : "Published"
+      : "Register";
   };
+
+  const buttonText = renderButton();
+
   return (
     <div className="flex gap-2 items-center justify-between pt-2">
       <button
@@ -36,25 +70,19 @@ function EventCardFooter({ campaign, choseCampaign, user, location }) {
         View
       </Link>
 
-      {renderButton() && (
+      {buttonText && (
         <button
-          title={renderButton()}
-          disabled={renderButton() == "Pending" || renderButton() == "Accepted" || renderButton() == 'Rejected' || renderButton() == 'Published'}
-          onClick={() => {
-            if (!user) {
-              navigate('/login')
-              return;
-            }
-            if (user.role == 'VOLUNTEER') {
-              handleRegister(campaign?.id)
-              return;
-            }
-            handlePublish(campaign?.id)
-            return;
-          }}
+          title={buttonText}
+          disabled={
+            buttonText == "Pending" ||
+            buttonText == "Accepted" ||
+            buttonText == "Rejected" ||
+            buttonText == "Published"
+          }
+          onClick={changeCampaignStatus}
           className="secondary-btn disabled:cursor-not-allowed!"
         >
-          {renderButton()}
+          {buttonText}
         </button>
       )}
     </div>
